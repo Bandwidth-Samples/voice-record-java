@@ -1,4 +1,4 @@
-# Repo Title REPLACE
+# Voice Recording Java
 <a href="http://dev.bandwidth.com"><img src="https://s3.amazonaws.com/bwdemos/BW-VMP.png"/></a>
 </div>
 
@@ -6,7 +6,6 @@
 
 <!-- TOC -->
 
-- [Repo Title REPLACE](#repo-title-replace)
 - [Description](#description)
 - [Bandwidth](#bandwidth)
 - [Environmental Variables](#environmental-variables)
@@ -16,7 +15,12 @@
 <!-- /TOC -->
 
 # Description
-A short description of your sample app and its capabilities. 
+
+This sample app demonstrates how to record a message from an inbound call, similar to how a voicemail machine would work.
+
+When the user calls the Bandwidth phone number associated with this application, the user will hear an audio prompt to leave a message, then a beep. Once this happens, the call will begin recording.
+
+When the call ends, Bandwidth will start to process the recording. Once this processing is complete, Bandwidth will send a webhook to the `/recordingAvailableCallback` endpoint on this application. Once received, the application will download the recording via Bandwidth's voice recording API.
 
 # Bandwidth
 
@@ -32,11 +36,7 @@ The sample app uses the below environmental variables.
 BW_ACCOUNT_ID                 # Your Bandwidth Account Id
 BW_USERNAME                   # Your Bandwidth API Token
 BW_PASSWORD                   # Your Bandwidth API Secret
-BW_NUMBER                     # Your The Bandwidth Phone Number
 BW_VOICE_APPLICATION_ID       # Your Voice Application Id created in the dashboard
-BW_MESSAGING_APPLICATION_ID   # Your Messaging Application Id created in the dashboard
-BASE_CALLBACK_URL             # Your public base url
-LOCAL_PORT                    # The port number you wish to run the sample on
 ```
 
 # Callback URLs
@@ -44,8 +44,8 @@ LOCAL_PORT                    # The port number you wish to run the sample on
 For a detailed introduction to Bandwidth Callbacks see https://dev.bandwidth.com/guides/callbacks/callbacks.html
 
 Below are the callback paths:
-* `/callbacks/voiceCallback`
-* `<add other callbacks>`
+* `/callbacks/callInitiatedCallback`
+* `/callbacks/recordingAvailableCallback`
 
 ## Ngrok
 
