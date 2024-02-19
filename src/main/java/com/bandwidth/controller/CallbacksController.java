@@ -1,92 +1,102 @@
 package com.bandwidth.controller;
 
-import com.bandwidth.BandwidthClient;
-import com.bandwidth.Environment;
-import com.bandwidth.Model.VoiceCallback;
-import com.bandwidth.exceptions.ApiException;
-import com.bandwidth.http.response.ApiResponse;
-import com.bandwidth.voice.bxml.verbs.*;
-import com.bandwidth.voice.controllers.APIController;
-import org.apache.commons.io.FileUtils;
+import com.bandwidth.Main;
+import com.bandwidth.sdk.ApiClient;
+import com.bandwidth.sdk.ApiResponse;
+import com.bandwidth.sdk.ApiException;
+import com.bandwidth.sdk.auth.HttpBasicAuth;
+import com.bandwidth.sdk.Configuration;
+
+import com.bandwidth.sdk.model.InitiateCallback;
+import com.bandwidth.sdk.model.RecordingAvailableCallback;
+import com.bandwidth.sdk.api.RecordingsApi;
+import com.bandwidth.sdk.model.bxml.*;
+import com.bandwidth.sdk.model.bxml.Record;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+
+import java.io.IOException;
+import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 
 @RestController
 @RequestMapping("callbacks")
 public class CallbacksController {
-
     Logger logger = LoggerFactory.getLogger(CallbacksController.class);
 
-    private String username = System.getenv("BW_USERNAME");
-    private String password = System.getenv("BW_PASSWORD");
-    private String accountId = System.getenv("BW_ACCOUNT_ID");
-    private String applicationId = System.getenv("BW_VOICE_APPLICATION_ID");
+    public final String username = System.getenv("BW_USERNAME");
+    public final String password = System.getenv("BW_PASSWORD");
+    public final String accountId = System.getenv("BW_ACCOUNT_ID");
+    public final String baseUrl = System.getenv("BW_BASE_URL");
 
-    private BandwidthClient client = new BandwidthClient.Builder()
-            .voiceBasicAuthCredentials(username, password)
-            .environment(Environment.PRODUCTION)
-            .build();
+    public ApiClient defaultClient = Configuration.getDefaultApiClient();
+    public HttpBasicAuth Basic = (HttpBasicAuth) defaultClient.getAuthentication("Basic");
 
-    private APIController controller = client.getVoiceClient().getAPIController();
+    public final RecordingsApi recordingsApi = new RecordingsApi(defaultClient);
 
-    @PostMapping("/callInitiatedCallback")
-    public String voiceCallback(@RequestBody VoiceCallback callback, HttpServletRequest request) throws IOException, MalformedURLException {
-
-        logger.info(request.getServletPath() + " requested");
+    @PostMapping("/inbound")
+    public String inboundCall(@RequestBody InitiateCallback callback) throws IOException, JAXBException {
 
         Response response = new Response();
+	JAXBContext jaxbContext = JAXBContext.newInstance(Response.class);
 
-        SpeakSentence ss1 = SpeakSentence.builder().text("You have reached Vandelay Industries, Kal Varnsen is unavailable at this time.").build();
+        logger.info(callback.getCallId());
 
-        SpeakSentence ss2 = SpeakSentence.builder().text("At the tone, please record your message, when you have finished recording, you may hang up.").build();
+        SpeakSentence ss1 = new SpeakSentence("You have reached Vandelay Industries, Kal Varnsen is unavailable at this time.");
 
-        PlayAudio playAudio = PlayAudio.builder().audioUri("/files/tone").build();
+        SpeakSentence ss2 = new SpeakSentence("At the tone, please record your message, when you have finished recording, you may hang up.");
 
-        Record record = Record.builder().recordingAvailableUrl("/callbacks/recordingAvailableCallback").build();
+        PlayAudio playAudio = new PlayAudio().builder()
+                                   .audioUri("/files/tone")
+                                   .build();    
 
-        String bxml = response.addAll(ss1, ss2, playAudio, record).toBXML();
+	Record record =  new Record().builder()
+	                           .recordingAvailableUrl("/callbacks/recordingAvailableCallback")
+	                           .build();
 
-        logger.info(bxml);
+        response.withVerbs(ss1, ss2, playAudio, record);
 
-        return bxml;
+	logger.info(response.toBxml(jaxbContext));
 
+        return response.toBxml(jaxbContext);
     }
 
-    @PostMapping("/recordingAvailableCallback")
-    public String gatherCallback(@RequestBody VoiceCallback callback, HttpServletRequest request) throws IOException, ApiException {
-
-        logger.info(request.getServletPath() + " requested");
+    @RequestMapping("/recordingAvailableCallback")
+    public String gatherCallback(@RequestBody RecordingAvailableCallback callback) throws JAXBException {
 
         Response response = new Response();
+	JAXBContext jaxbContext = JAXBContext.newInstance(Response.class);
 
-        System.out.println(callback.getEventType());
-        System.out.println(callback.getCallId());
-        switch( callback.getEventType()) {
-            case "recordingAvailable":
+        Basic.setUsername(username);
+        Basic.setPassword(password);
 
-                ApiResponse<InputStream> recording = controller.getStreamRecordingMedia(accountId, callback.getCallId(), callback.getRecordingId());
+	String callId = callback.getCallId();
+        String recordingId = callback.getRecordingId();
 
-                InputStream stream = recording.getResult();
+        logger.info(callback.getEventType());
+        logger.info(callId);
 
-                File file = new File("./recording." + callback.getFileFormat());
+        if("recordingAvailable".equalsIgnoreCase(callback.getEventType())) {
 
-                FileUtils.copyInputStreamToFile(stream, file);
+            try {
+                File result = recordingsApi.downloadCallRecording(accountId, callId, recordingId);
+                logger.info(result.getAbsolutePath());
+            } catch (ApiException e) {
+                System.err.println("Exception when calling RecordingsApi#downloadCallRecording");
+                System.err.println("Status code: " + e.getCode());
 
-            default:
-                break;
+		System.err.println("Reason: " + e.getResponseBody());
+                System.err.println("Response headers: " + e.getResponseHeaders());
+                e.printStackTrace();
+	   }
         }
-        return response.toBXML();
-    }
 
+        return response.toBxml(jaxbContext);
+    }
 
 }

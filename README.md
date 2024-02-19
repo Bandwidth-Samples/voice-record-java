@@ -44,7 +44,7 @@ BW_VOICE_APPLICATION_ID       # Your Voice Application Id created in the dashboa
 For a detailed introduction to Bandwidth Callbacks see https://dev.bandwidth.com/guides/callbacks/callbacks.html
 
 Below are the callback paths:
-* `/callbacks/callInitiatedCallback`
+* `/callbacks/inbound`
 * `/callbacks/recordingAvailableCallback`
 
 ## Ngrok
