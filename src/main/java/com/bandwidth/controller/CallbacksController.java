@@ -39,7 +39,7 @@ public class CallbacksController {
 
     public final RecordingsApi recordingsApi = new RecordingsApi(defaultClient);
 
-    @PostMapping("/inbound")
+    @PostMapping("/callInitiatedCallback")
     public String inboundCall(@RequestBody InitiateCallback callback) throws IOException, JAXBException {
 
         Response response = new Response();
