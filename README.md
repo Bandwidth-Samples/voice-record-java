@@ -1,18 +1,16 @@
-# Voice Recording Java
-<a href="http://dev.bandwidth.com"><img src="https://s3.amazonaws.com/bwdemos/BW-VMP.png"/></a>
-</div>
+# Voice Record
+
+<a href="https://dev.bandwidth.com/docs/voice/quickStart">
+  <img src="./icon-voice.svg" title="Voice Quick Start Guide" alt="Voice Quick Start Guide"/>
+</a>
 
  # Table of Contents
-
-<!-- TOC -->
 
 - [Description](#description)
 - [Bandwidth](#bandwidth)
 - [Environmental Variables](#environmental-variables)
 - [Callback URLs](#callback-urls)
     - [Ngrok](#ngrok)
-
-<!-- /TOC -->
 
 # Description
 
