@@ -16,17 +16,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @RestController
-@RequestMapping("files")
 public class FilesController {
 
     Logger logger = LoggerFactory.getLogger(FilesController.class);
 
     @GetMapping(
-            value = "/tone",
-            produces = "audio/mp3"
+            value = "/tone.mp3",
+            produces = "audio/mpeg"
     )
     public @ResponseBody byte[] getTone() throws IOException {
-        Resource resource = new ClassPathResource("Tone.mp3");
+        Resource resource = new ClassPathResource("tone.mp3");
 
         InputStream stream = resource.getInputStream();
 
