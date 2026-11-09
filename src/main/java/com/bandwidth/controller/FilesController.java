@@ -1,7 +1,5 @@
 package com.bandwidth.controller;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -27,8 +25,8 @@ public class FilesController {
     public @ResponseBody byte[] getTone() throws IOException {
         Resource resource = new ClassPathResource("tone.mp3");
 
-        InputStream stream = resource.getInputStream();
-
-        return IOUtils.toByteArray(stream);
+        try (InputStream stream = resource.getInputStream()) {
+            return stream.readAllBytes();
+        }
     }
 }
